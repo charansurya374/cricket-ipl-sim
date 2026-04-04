@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>IPL Simulator</title>
+
+<style>
+body {
+  margin:0;
+  font-family: Arial;
+  background:#0a0d2c;
+  color:white;
+}
+
+/* HEADER */
+.header {
+  background:#11164d;
+  padding:15px;
+  font-size:26px;
+  text-align:center;
+  font-weight:bold;
+}
+
+/* SCOREBOARD (TV STYLE) */
+.scoreboard {
+  display:flex;
+  justify-content:space-between;
+  background:#1c2160;
+  padding:15px;
+  font-size:18px;
+}
+
+.left { text-align:left; }
+.right { text-align:right; }
+
+/* MAIN */
+.container {
+  padding:20px;
+  text-align:center;
+}
+
+button {
+  padding:10px 20px;
+  margin:10px;
+  background:#ffcc00;
+  border:none;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+input, select {
+  padding:10px;
+  margin:10px;
+}
+
+/* COMMENTARY */
+.commentary {
+  background:black;
+  height:200px;
+  overflow-y:auto;
+  padding:10px;
+  text-align:left;
+  border-radius:10px;
+}
+
+/* HIGHLIGHTS */
+.highlight {
+  background:#222;
+  padding:10px;
+  margin:5px;
+  border-left:5px solid gold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">🏏 IPL BROADCAST SIMULATOR</div>
+
+<div class="scoreboard">
+  <div class="left" id="teamName">TEAM</div>
+  <div id="score">0/0 (0.0)</div>
+  <div class="right">LIVE</div>
+</div>
+
+<div class="container">
+
+<input id="name" placeholder="Enter your name">
+
+<select id="team">
+<option>CSK</option>
+<option>MI</option>
+<option>RCB</option>
+<option>KKR</option>
+<option>SRH</option>
+<option>RR</option>
+<option>DC</option>
+<option>GT</option>
+<option>PBKS</option>
+<option>LSG</option>
+</select>
+
+<br>
+<button onclick="start()">Start Match</button>
+<button onclick="ball()">Play Ball</button>
+
+<h3 id="result"></h3>
+
+<hr>
+
+<h2>🎙 Commentary</h2>
+<div class="commentary" id="comm"></div>
+
+<hr>
+
+<h2>🔥 Highlights</h2>
+<div id="highlights"></div>
+
+<hr>
+
+<h2>👤 Career</h2>
+<p id="runs"></p>
+<p id="wkts"></p>
+<p id="rating"></p>
+
+</div>
+
+<!-- SOUND -->
+<audio id="sixSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+<audio id="wicketSound" src="https://www.soundjay.com/button/beep-10.wav"></audio>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+
+const socket = io();
+
+function start(){
+  let name = document.getElementById("name").value;
+  let team = document.getElementById("team").value;
+
+  document.getElementById("teamName").innerText = team;
+
+  socket.emit("start",{name,team});
+}
+
+function ball(){
+  socket.emit("ball");
+}
+
+// SCORE
+socket.on("update",(g)=>{
+  document.getElementById("score").innerText =
+    g.score+"/"+g.wickets+" ("+Math.floor(g.balls/6)+"."+g.balls%6+")";
+});
+
+// CAREER
+socket.on("career",(p)=>{
+  document.getElementById("runs").innerText="Runs: "+p.runs;
+  document.getElementById("wkts").innerText="Wickets: "+p.wickets;
+  document.getElementById("rating").innerText="Rating: "+p.rating;
+});
+
+// COMMENTARY
+socket.on("commentary",(text)=>{
+  let box=document.getElementById("comm");
+  box.innerHTML = text + "<br>" + box.innerHTML;
+});
+
+// HIGHLIGHTS
+socket.on("highlight",(text)=>{
+  let h=document.getElementById("highlights");
+  h.innerHTML = `<div class="highlight">${text}</div>` + h.innerHTML;
+});
+
+// SOUND
+socket.on("six",()=>{
+  document.getElementById("sixSound").play();
+});
+
+socket.on("wicket",()=>{
+  document.getElementById("wicketSound").play();
+});
+
+// RESULT
+socket.on("matchOver",(r)=>{
+  document.getElementById("result").innerText=r;
+});
+
+</script>
+
+</body>
+</html>
