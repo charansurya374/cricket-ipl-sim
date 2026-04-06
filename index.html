@@ -1,39 +1,70 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
 <title>IPL Simulator</title>
 
 <style>
-body { background:#0b0f17; color:white; font-family:Arial; text-align:center; }
-
-.container {
-  display:flex;
-  justify-content:space-around;
-  flex-wrap:wrap;
+body {
+  margin:0;
+  font-family:Arial;
+  background:#0b0f17;
+  color:white;
 }
 
+/* HEADER */
+h1 {
+  text-align:center;
+  padding:20px;
+}
+
+/* GRID */
+.container {
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap:20px;
+  padding:20px;
+}
+
+/* CARDS */
 .card {
   background:#111827;
-  padding:15px;
-  margin:10px;
   border-radius:12px;
-  width:320px;
+  padding:15px;
+  min-height:220px;
 }
 
+/* BUTTONS */
 button {
-  padding:10px;
+  padding:10px 14px;
   margin:5px;
   background:#2563eb;
-  color:white;
   border:none;
+  color:white;
   border-radius:6px;
   cursor:pointer;
 }
 
+button:hover {
+  background:#1d4ed8;
+}
+
+/* COMMENTARY */
 #commentary {
-  height:200px;
+  height:220px;
   overflow-y:auto;
   text-align:left;
+  font-size:14px;
+}
+
+/* MATCH BOX */
+#match h1 {
+  margin:10px 0;
+}
+
+/* TABLE */
+#table p {
+  margin:6px 0;
 }
 </style>
 
@@ -45,25 +76,35 @@ button {
 
 <div class="container">
 
-<div class="card" id="match"></div>
+  <!-- MATCH -->
+  <div class="card" id="match">
+    <h2>Match Info</h2>
+  </div>
 
-<div class="card">
-<h2>Controls</h2>
-<button onclick="playBall()">Play Ball</button>
-<button onclick="autoPlay()">Auto</button>
-<button onclick="simulateInnings()">Sim Inn</button>
-<button onclick="simulateMatch()">Sim Match</button>
+  <!-- CONTROLS -->
+  <div class="card">
+    <h2>Controls</h2>
+
+    <button onclick="playBall()">Play Ball</button>
+    <button onclick="autoPlay()">Auto</button>
+    <button onclick="simulateInnings()">Sim Inn</button>
+    <button onclick="simulateMatch()">Sim Match</button>
+  </div>
+
+  <!-- POINTS TABLE -->
+  <div class="card" id="table">
+    <h2>Points Table</h2>
+  </div>
+
+  <!-- COMMENTARY -->
+  <div class="card">
+    <h2>Commentary</h2>
+    <div id="commentary"></div>
+  </div>
+
 </div>
 
-<div class="card" id="table"></div>
-
-<div class="card">
-<h2>Commentary</h2>
-<div id="commentary"></div>
-</div>
-
-</div>
-
+<!-- JS FILE -->
 <script src="script.js"></script>
 
 </body>
