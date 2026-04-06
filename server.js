@@ -182,6 +182,8 @@ function clearCommentary(){
 // ================= UI =================
 function updateUI(){
 
+ if(!match.batting) return;
+
  document.getElementById("match").innerHTML=`
  <h2>${match.batting} vs ${match.bowling}</h2>
  <h1>${match.score}/${match.wickets}</h1>
@@ -190,6 +192,7 @@ function updateUI(){
  <p>Non-Striker: ${squad[match.batting][match.nonStriker] || "-"}</p>
  ${match.innings===2?`<p>Target: ${match.target}</p>`:""}
  `;
+}
 
  let html="<h2>Points Table</h2>";
  teams.forEach(t=>{
