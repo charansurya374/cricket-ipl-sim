@@ -1,70 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
 <title>IPL Simulator</title>
 
 <style>
 body {
   margin:0;
-  font-family:Arial;
-  background:#0b0f17;
+  font-family: Arial;
+  background:#0b0f1a;
   color:white;
 }
 
-/* HEADER */
-h1 {
-  text-align:center;
+.sidebar {
+  width:220px;
+  height:100vh;
+  background:#0e1323;
+  position:fixed;
   padding:20px;
 }
 
-/* GRID */
-.container {
-  display:grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  gap:20px;
+.sidebar h2 { color:#4ade80; }
+
+.menu div {
+  padding:12px;
+  margin:8px 0;
+  cursor:pointer;
+  border-radius:8px;
+}
+.menu div:hover { background:#1a2238; }
+
+.main {
+  margin-left:240px;
   padding:20px;
 }
 
-/* CARDS */
 .card {
   background:#111827;
+  padding:20px;
   border-radius:12px;
-  padding:15px;
-  min-height:220px;
+  margin-bottom:20px;
 }
 
-/* BUTTONS */
+.grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:20px;
+}
+
 button {
-  padding:10px 14px;
-  margin:5px;
-  background:#2563eb;
+  padding:10px;
   border:none;
+  border-radius:8px;
+  background:#22c55e;
   color:white;
-  border-radius:6px;
   cursor:pointer;
+  margin:5px;
 }
 
-button:hover {
-  background:#1d4ed8;
+table {
+  width:100%;
+  border-collapse:collapse;
 }
+th,td { padding:10px; }
+tr:nth-child(even){ background:#1a2238; }
 
-/* COMMENTARY */
+.page { display:none; }
+.active { display:block; }
+
 #commentary {
-  height:220px;
+  height:250px;
   overflow-y:auto;
-  text-align:left;
-  font-size:14px;
-}
-
-/* MATCH BOX */
-#match h1 {
-  margin:10px 0;
-}
-
-/* TABLE */
-#table p {
-  margin:6px 0;
+  background:#0e1323;
+  padding:10px;
+  border-radius:10px;
 }
 </style>
 
@@ -72,40 +80,267 @@ button:hover {
 
 <body>
 
-<h1>🏏 IPL Simulator</h1>
+<div class="sidebar">
+  <h2>Mumbai</h2>
 
-<div class="container">
-
-  <!-- MATCH -->
-  <div class="card" id="match">
-    <h2>Match Info</h2>
+  <div class="menu">
+    <div onclick="showPage('home')">🏠 Home</div>
+    <div onclick="showPage('match')">🎮 Match</div>
+    <div onclick="showPage('squad')">👥 Squad</div>
+    <div onclick="showPage('schedule')">📅 Schedule</div>
+    <div onclick="showPage('table')">🏆 Table</div>
+    <div onclick="showPage('stats')">📊 Stats</div>
   </div>
+</div>
 
-  <!-- CONTROLS -->
+<div class="main">
+
+<!-- HOME -->
+<div id="home" class="page active">
+  <div class="grid">
+    <div class="card">
+      <h3>Next Match</h3>
+      Mumbai vs Chennai
+      <br><br>
+      <button onclick="startMatch()">Start Match</button>
+    </div>
+
+    <div class="card">
+      <h3>League Position</h3>
+      #1
+    </div>
+
+    <div class="card">
+      <h3>Form</h3>
+      W W L
+    </div>
+  </div>
+</div>
+
+<!-- MATCH -->
+<div id="match" class="page">
   <div class="card">
-    <h2>Controls</h2>
+    <h2 id="score">0/0 (0.0)</h2>
 
     <button onclick="playBall()">Play Ball</button>
     <button onclick="autoPlay()">Auto</button>
-    <button onclick="simulateInnings()">Sim Inn</button>
-    <button onclick="simulateMatch()">Sim Match</button>
-  </div>
+    <button onclick="simInnings()">Sim Inn</button>
+    <button onclick="simMatch()">Sim Match</button>
 
-  <!-- POINTS TABLE -->
-  <div class="card" id="table">
-    <h2>Points Table</h2>
-  </div>
-
-  <!-- COMMENTARY -->
-  <div class="card">
-    <h2>Commentary</h2>
+    <h3>Commentary</h3>
     <div id="commentary"></div>
   </div>
+</div>
+
+<!-- SQUAD -->
+<div id="squad" class="page">
+  <div class="card">
+    <h2>Squad</h2>
+    <table id="squadTable"></table>
+  </div>
+</div>
+
+<!-- SCHEDULE -->
+<div id="schedule" class="page">
+  <div class="card">
+    <h2>Schedule</h2>
+    <table id="scheduleTable"></table>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div id="table" class="page">
+  <div class="card">
+    <h2>Points Table</h2>
+    <table id="pointsTable"></table>
+  </div>
+</div>
+
+<!-- STATS -->
+<div id="stats" class="page">
+  <div class="grid">
+    <div class="card">
+      <h3>Orange Cap</h3>
+      <div id="orange"></div>
+    </div>
+
+    <div class="card">
+      <h3>Purple Cap</h3>
+      <div id="purple"></div>
+    </div>
+  </div>
+</div>
 
 </div>
 
-<!-- JS FILE -->
-<script src="script.js"></script>
+<script>
+
+// ---------- TEAMS ----------
+let teams = {
+
+Mumbai: [
+"Rohit Sharma","Ishan Kishan","Suryakumar Yadav","Tilak Varma",
+"Hardik Pandya","Tim David","Romario Shepherd",
+"Gerald Coetzee","Piyush Chawla","Jasprit Bumrah","Akash Madhwal"
+],
+
+Chennai: [
+"Ruturaj Gaikwad","Devon Conway","Ajinkya Rahane","Shivam Dube",
+"Ravindra Jadeja","MS Dhoni","Moeen Ali",
+"Deepak Chahar","Maheesh Theekshana","Matheesha Pathirana","Tushar Deshpande"
+],
+
+Bangalore: [
+"Faf du Plessis","Virat Kohli","Rajat Patidar","Glenn Maxwell",
+"Cameron Green","Dinesh Karthik","Mahipal Lomror",
+"Mohammed Siraj","Reece Topley","Karn Sharma","Yash Dayal"
+],
+
+Kolkata: [
+"Shreyas Iyer","Sunil Narine","Venkatesh Iyer","Nitish Rana",
+"Andre Russell","Rinku Singh","Phil Salt",
+"Mitchell Starc","Varun Chakravarthy","Harshit Rana","Suyash Sharma"
+],
+
+Delhi: [
+"David Warner","Prithvi Shaw","Mitchell Marsh","Rishabh Pant",
+"Tristan Stubbs","Axar Patel","Lalit Yadav",
+"Anrich Nortje","Kuldeep Yadav","Khaleel Ahmed","Ishant Sharma"
+],
+
+Hyderabad: [
+"Travis Head","Abhishek Sharma","Aiden Markram","Rahul Tripathi",
+"Heinrich Klaasen","Washington Sundar","Marco Jansen",
+"Bhuvneshwar Kumar","T Natarajan","Mayank Markande","Umran Malik"
+],
+
+Rajasthan: [
+"Yashasvi Jaiswal","Jos Buttler","Sanju Samson","Riyan Parag",
+"Shimron Hetmyer","Dhruv Jurel","Ravichandran Ashwin",
+"Trent Boult","Yuzvendra Chahal","Avesh Khan","Sandeep Sharma"
+],
+
+Punjab: [
+"Shikhar Dhawan","Jonny Bairstow","Liam Livingstone","Jitesh Sharma",
+"Sam Curran","Shashank Singh","Harpreet Brar",
+"Kagiso Rabada","Arshdeep Singh","Rahul Chahar","Harshal Patel"
+],
+
+Lucknow: [
+"KL Rahul","Quinton de Kock","Nicholas Pooran","Marcus Stoinis",
+"Deepak Hooda","Ayush Badoni","Krunal Pandya",
+"Mark Wood","Ravi Bishnoi","Mohsin Khan","Naveen-ul-Haq"
+],
+
+Gujarat: [
+"Shubman Gill","Wriddhiman Saha","Sai Sudharsan","David Miller",
+"Rahul Tewatia","Vijay Shankar","Rashid Khan",
+"Mohammed Shami","Noor Ahmad","Umesh Yadav","Spencer Johnson"
+]
+
+};
+
+// ---------- MATCH STATE ----------
+let score=0, wickets=0, balls=0, innings=1;
+let strikerIndex=0;
+let currentTeam="Mumbai";
+let opponent="Chennai";
+
+// ---------- COMMENTARY ----------
+function addComment(text){
+  let div=document.getElementById("commentary");
+  div.innerHTML = text + "<br>" + div.innerHTML;
+}
+
+// ---------- PLAY BALL ----------
+function playBall(){
+
+  if(balls>=120 || wickets>=10){
+    if(innings===1){
+      addComment("Innings Break");
+      innings=2;
+      balls=0; wickets=0; score=0;
+      currentTeam="Chennai";
+      return;
+    } else {
+      addComment("Match Finished");
+      return;
+    }
+  }
+
+  balls++;
+
+  let outcome = Math.random();
+  let runs = [0,1,2,3,4,6];
+
+  if(outcome<0.1){
+    wickets++;
+    addComment("OUT! "+teams[currentTeam][strikerIndex]);
+  } else {
+    let r = runs[Math.floor(Math.random()*runs.length)];
+    score+=r;
+    addComment(balls/6 + "." + balls%6 + " → "+r+" runs");
+  }
+
+  document.getElementById("score").innerText =
+    score+"/"+wickets+" ("+(Math.floor(balls/6)+"."+balls%6)+")";
+}
+
+// ---------- AUTO ----------
+function autoPlay(){
+  let i=0;
+  let interval=setInterval(()=>{
+    playBall();
+    i++;
+    if(i>120) clearInterval(interval);
+  },200);
+}
+
+// ---------- SIM ----------
+function simInnings(){
+  while(balls<120 && wickets<10) playBall();
+}
+
+function simMatch(){
+  simInnings();
+  simInnings();
+}
+
+// ---------- START ----------
+function startMatch(){
+  showPage('match');
+}
+
+// ---------- PAGE ----------
+function showPage(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById(p).classList.add('active');
+}
+
+// ---------- SQUAD LOAD ----------
+let squadHTML="<tr><th>Player</th></tr>";
+teams["Mumbai"].forEach(p=>{
+  squadHTML += "<tr><td>"+p+"</td></tr>";
+});
+document.getElementById("squadTable").innerHTML = squadHTML;
+
+// ---------- SCHEDULE ----------
+let sched="<tr><th>Match</th></tr>";
+sched+="<tr><td>Mumbai vs Chennai</td></tr>";
+sched+="<tr><td>RCB vs KKR</td></tr>";
+document.getElementById("scheduleTable").innerHTML=sched;
+
+// ---------- TABLE ----------
+let pts="<tr><th>Team</th><th>Pts</th></tr>";
+pts+="<tr><td>Mumbai</td><td>2</td></tr>";
+pts+="<tr><td>Chennai</td><td>0</td></tr>";
+document.getElementById("pointsTable").innerHTML=pts;
+
+// ---------- STATS ----------
+document.getElementById("orange").innerText="Rohit - 120";
+document.getElementById("purple").innerText="Bumrah - 5";
+
+</script>
 
 </body>
 </html>
