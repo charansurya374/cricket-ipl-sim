@@ -1,206 +1,268 @@
 // ================= TEAMS =================
-const teams = ["CSK","MI","RCB","KKR","SRH","DC","RR","PBKS","GT","LSG"];
+let teams = {
 
-// ================= REAL PLAYERS =================
-let squad = {
-CSK:["Ruturaj Gaikwad","Conway","Rahane","Dube","Dhoni","Jadeja","Moeen","Chahar","Theekshana","Pathirana","Deshpande"],
-MI:["Rohit","Ishan","SKY","Tilak","Hardik","Tim David","Shepherd","Chawla","Bumrah","Coetzee","Madhwal"],
-RCB:["Kohli","Faf","Patidar","Maxwell","Green","DK","Lomror","Karn","Siraj","Topley","Dayal"],
-KKR:["Shreyas","Salt","Venky","Rana","Rinku","Russell","Narine","Ramandeep","Starc","Varun","Harshit"],
-SRH:["Head","Abhishek","Markram","Klaasen","Tripathi","Nitish","Shahbaz","Cummins","Bhuvi","Natarajan","Markande"],
-DC:["Warner","Shaw","Marsh","Pant","Stubbs","Axar","Lalit","Kuldeep","Nortje","Khaleel","Ishant"],
-RR:["Jaiswal","Buttler","Samson","Parag","Hetmyer","Jurel","Ashwin","Boult","Avesh","Chahal","Sandeep"],
-PBKS:["Dhawan","Bairstow","Livingstone","Curran","Jitesh","Shashank","Brar","Rabada","Arshdeep","Chahar","Harshal"],
-GT:["Gill","Saha","Sudharsan","Miller","Tewatia","Shankar","Rashid","Noor","Shami","Umesh","Spencer"],
-LSG:["Rahul","deKock","Stoinis","Pooran","Badoni","Hooda","Krunal","Bishnoi","Wood","Naveen","Mohsin"]
+Mumbai: ["Rohit","Ishan","Surya","Tilak","Hardik","Tim David","Shepherd","Chawla","Bumrah","Coetzee","Madhwal"],
+Chennai: ["Ruturaj","Conway","Rahane","Dube","Dhoni","Jadeja","Moeen","Chahar","Theekshana","Pathirana","Deshpande"],
+Bangalore: ["Faf","Kohli","Patidar","Maxwell","Green","DK","Lomror","Siraj","Topley","Karn","Dayal"],
+Kolkata: ["Shreyas","Salt","Venky","Rana","Rinku","Russell","Narine","Starc","Varun","Harshit","Suyash"],
+Delhi: ["Warner","Shaw","Marsh","Pant","Stubbs","Axar","Lalit","Kuldeep","Nortje","Khaleel","Ishant"],
+Hyderabad: ["Head","Abhishek","Markram","Klaasen","Tripathi","Nitish","Shahbaz","Cummins","Bhuvi","Natarajan","Markande"],
+Rajasthan: ["Jaiswal","Buttler","Samson","Parag","Hetmyer","Jurel","Ashwin","Boult","Chahal","Avesh","Sandeep"],
+Punjab: ["Dhawan","Bairstow","Livingstone","Curran","Jitesh","Shashank","Brar","Rabada","Arshdeep","Chahar","Harshal"],
+Lucknow: ["Rahul","deKock","Stoinis","Pooran","Badoni","Hooda","Krunal","Bishnoi","Wood","Naveen","Mohsin"],
+Gujarat: ["Gill","Saha","Sudharsan","Miller","Tewatia","Shankar","Rashid","Shami","Noor","Umesh","Spencer"]
+
 };
 
 // ================= SCHEDULE =================
-let schedule=[];
-for(let i=0;i<teams.length;i++){
- for(let j=i+1;j<teams.length;j++){
-  schedule.push([teams[i],teams[j]]);
- }
+let teamNames = Object.keys(teams);
+let schedule = [];
+
+for (let i = 0; i < teamNames.length; i++) {
+  for (let j = i + 1; j < teamNames.length; j++) {
+    schedule.push({
+      home: teamNames[i],
+      away: teamNames[j],
+      played: false,
+      result: ""
+    });
+  }
 }
 
-// ================= TABLE =================
-let table={};
-teams.forEach(t=>table[t]={pts:0});
+// ================= POINTS =================
+let points = {};
+teamNames.forEach(t => {
+  points[t] = { pts: 0, played: 0, won: 0, lost: 0 };
+});
 
-// ================= MATCH =================
-let matchIndex=0;
+// ================= MATCH STATE =================
+let matchIndex = 0;
 
-let match={
- batting:"",
- bowling:"",
- score:0,
- wickets:0,
- balls:0,
- target:0,
- innings:1,
- striker:0,
- nonStriker:1
-};
+let currentTeam = "";
+let opponent = "";
 
-// ================= START =================
-function startMatch(){
- let m=schedule[matchIndex];
- match.batting=m[0];
- match.bowling=m[1];
+let score = 0;
+let wickets = 0;
+let balls = 0;
+let innings = 1;
+let target = 0;
 
- reset();
- match.innings=1;
- clearCommentary();
+let striker = 0;
+let nonStriker = 1;
 
- updateUI();
+// ================= START MATCH =================
+function startMatch() {
+
+  let m = schedule[matchIndex];
+
+  currentTeam = m.home;
+  opponent = m.away;
+
+  resetInnings();
+  innings = 1;
+
+  document.getElementById("matchTitle").innerText = currentTeam + " vs " + opponent;
+  document.getElementById("commentary").innerHTML = "";
+
+  updateUI();
+  showPage('match');
 }
 
-function reset(){
- match.score=0;
- match.wickets=0;
- match.balls=0;
- match.striker=0;
- match.nonStriker=1;
+// ================= RESET =================
+function resetInnings() {
+  score = 0;
+  wickets = 0;
+  balls = 0;
+  striker = 0;
+  nonStriker = 1;
 }
 
 // ================= PLAY BALL =================
-function playBall(){
+function playBall() {
 
- if(match.balls>=120 || match.wickets>=10){
-  endInnings();
-  return;
- }
-
- let outcomes=[0,1,2,3,4,6,"W"];
- let res=outcomes[Math.floor(Math.random()*outcomes.length)];
-
- let strikerName = squad[match.batting][match.striker];
-
- let overBall = Math.floor(match.balls/6) + "." + (match.balls%6+1);
-
- let text="";
-
- if(res==="W"){
-  match.wickets++;
-  text=`${overBall} ${strikerName} OUT! 😱`;
-  match.striker++;
- }
- else{
-  match.score+=res;
-
-  if(res===0) text=`${overBall} ${strikerName} dot ball`;
-  if(res===4) text=`${overBall} ${strikerName} FOUR! 🔥`;
-  if(res===6) text=`${overBall} ${strikerName} SIX! 🚀`;
-  if(res===1||res===2||res===3) text=`${overBall} ${strikerName} ${res} run(s)`;
-
-  if(res%2===1){
-   [match.striker,match.nonStriker]=[match.nonStriker,match.striker];
+  if (balls >= 120 || wickets >= 10) {
+    endInnings();
+    return;
   }
- }
 
- match.balls++;
+  let outcomes = [0,1,2,3,4,6,"W"];
+  let res = outcomes[Math.floor(Math.random() * outcomes.length)];
 
- if(match.balls%6===0){
-  [match.striker,match.nonStriker]=[match.nonStriker,match.striker];
- }
+  let player = teams[currentTeam][striker];
 
- addCommentary(text);
+  let over = Math.floor(balls / 6) + "." + (balls % 6 + 1);
 
- if(match.innings===2 && match.score>=match.target){
-  endMatch(match.batting);
- }
+  let text = "";
 
- updateUI();
+  if (res === "W") {
+    wickets++;
+    text = `${over} ${player} OUT!`;
+    striker++;
+  } else {
+    score += res;
+
+    if (res === 0) text = `${over} ${player} dot ball`;
+    if (res === 4) text = `${over} ${player} FOUR! 🔥`;
+    if (res === 6) text = `${over} ${player} SIX! 🚀`;
+    if (res === 1 || res === 2 || res === 3) text = `${over} ${player} ${res} run(s)`;
+
+    if (res % 2 === 1) {
+      [striker, nonStriker] = [nonStriker, striker];
+    }
+  }
+
+  balls++;
+
+  if (balls % 6 === 0) {
+    [striker, nonStriker] = [nonStriker, striker];
+  }
+
+  addComment(text);
+
+  if (innings === 2 && score >= target) {
+    endMatch(currentTeam);
+    return;
+  }
+
+  updateUI();
 }
 
 // ================= END INNINGS =================
-function endInnings(){
+function endInnings() {
 
- if(match.innings===1){
+  if (innings === 1) {
 
-  match.target=match.score+1;
+    target = score + 1;
 
-  [match.batting,match.bowling]=[match.bowling,match.batting];
+    [currentTeam, opponent] = [opponent, currentTeam];
 
-  reset();
-  match.innings=2;
+    resetInnings();
+    innings = 2;
 
- } else {
+    addComment("Innings Break");
 
-  if(match.score>=match.target){
-   endMatch(match.batting);
   } else {
-   endMatch(match.bowling);
+
+    let winner = (score >= target) ? currentTeam : opponent;
+    endMatch(winner);
   }
- }
+
+  updateUI();
 }
 
 // ================= END MATCH =================
-function endMatch(winner){
- table[winner].pts+=2;
+function endMatch(winner) {
 
- alert("Winner: "+winner);
+  let m = schedule[matchIndex];
+  let loser = (winner === m.home) ? m.away : m.home;
 
- matchIndex++;
+  points[winner].pts += 2;
+  points[winner].won++;
+  points[winner].played++;
 
- if(matchIndex>=schedule.length){
-  alert("League Finished!");
- } else {
-  startMatch();
- }
-}
+  points[loser].lost++;
+  points[loser].played++;
 
-// ================= AUTO =================
-function autoPlay(){
- let i=setInterval(()=>{
-  if(match.balls>=120) clearInterval(i);
-  else playBall();
- },120);
-}
+  m.played = true;
+  m.result = winner + " won";
 
-function simulateInnings(){
- while(match.balls<120){
-  playBall();
- }
-}
+  addComment("🏆 " + winner + " wins!");
 
-function simulateMatch(){
- simulateInnings();
- simulateInnings();
+  updatePointsTable();
+  loadSchedule();
+
+  setTimeout(() => {
+    matchIndex++;
+    if (matchIndex < schedule.length) {
+      startMatch();
+    } else {
+      alert("League Finished!");
+    }
+  }, 2000);
 }
 
 // ================= COMMENTARY =================
-function addCommentary(text){
- let div=document.getElementById("commentary");
- div.innerHTML = text + "<br>" + div.innerHTML;
+function addComment(text) {
+  let div = document.getElementById("commentary");
+  div.innerHTML = text + "<br>" + div.innerHTML;
 }
 
-function clearCommentary(){
- document.getElementById("commentary").innerHTML="";
+// ================= AUTO =================
+function autoPlay() {
+  let i = setInterval(() => {
+    if (balls >= 120 || wickets >= 10) clearInterval(i);
+    else playBall();
+  }, 120);
+}
+
+function simInnings() {
+  while (balls < 120 && wickets < 10) {
+    playBall();
+  }
+}
+
+function simMatch() {
+  simInnings();
+  simInnings();
 }
 
 // ================= UI =================
-function updateUI(){
+function updateUI() {
 
- if(!match.batting) return;
+  document.getElementById("score").innerText =
+    `${score}/${wickets} (${(balls/6).toFixed(1)})`;
 
- document.getElementById("match").innerHTML=`
- <h2>${match.batting} vs ${match.bowling}</h2>
- <h1>${match.score}/${match.wickets}</h1>
- <p>Overs: ${(match.balls/6).toFixed(1)}</p>
- <p>Striker: ${squad[match.batting][match.striker] || "-"}</p>
- <p>Non-Striker: ${squad[match.batting][match.nonStriker] || "-"}</p>
- ${match.innings===2?`<p>Target: ${match.target}</p>`:""}
- `;
+  document.getElementById("players").innerText =
+    `Striker: ${teams[currentTeam][striker] || "-"} | Non-Striker: ${teams[currentTeam][nonStriker] || "-"}`;
+
+  document.getElementById("nextMatch").innerText =
+    schedule[matchIndex]?.home + " vs " + schedule[matchIndex]?.away;
 }
 
- let html="<h2>Points Table</h2>";
- teams.forEach(t=>{
-  html+=`<p>${t} - ${table[t].pts}</p>`;
- });
+// ================= SCHEDULE UI =================
+function loadSchedule() {
 
- document.getElementById("table").innerHTML=html;
+  let html = "<tr><th>#</th><th>Match</th><th>Status</th></tr>";
+
+  schedule.forEach((m, i) => {
+    html += `
+      <tr>
+        <td>${i+1}</td>
+        <td>${m.home} vs ${m.away}</td>
+        <td>${m.played ? m.result : "Upcoming"}</td>
+      </tr>
+    `;
+  });
+
+  document.getElementById("scheduleTable").innerHTML = html;
+}
+
+// ================= POINTS TABLE =================
+function updatePointsTable() {
+
+  let html = "<tr><th>Team</th><th>P</th><th>W</th><th>L</th><th>Pts</th></tr>";
+
+  Object.keys(points).forEach(t => {
+    let p = points[t];
+    html += `<tr>
+      <td>${t}</td>
+      <td>${p.played}</td>
+      <td>${p.won}</td>
+      <td>${p.lost}</td>
+      <td>${p.pts}</td>
+    </tr>`;
+  });
+
+  document.getElementById("pointsTable").innerHTML = html;
+}
+
+// ================= PAGE NAV =================
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+  document.getElementById(p).classList.add('active');
 }
 
 // ================= INIT =================
-startMatch();
+loadSchedule();
+updatePointsTable();
+updateUI();
