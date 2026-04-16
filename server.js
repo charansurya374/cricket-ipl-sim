@@ -1,268 +1,242 @@
-// ================= TEAMS =================
-let teams = {
+// ---------------- TEAMS ----------------
+const teams = ["MI","CSK","RCB","KKR","SRH","DC","PBKS","RR","GT","LSG"];
 
-Mumbai: ["Rohit","Ishan","Surya","Tilak","Hardik","Tim David","Shepherd","Chawla","Bumrah","Coetzee","Madhwal"],
-Chennai: ["Ruturaj","Conway","Rahane","Dube","Dhoni","Jadeja","Moeen","Chahar","Theekshana","Pathirana","Deshpande"],
-Bangalore: ["Faf","Kohli","Patidar","Maxwell","Green","DK","Lomror","Siraj","Topley","Karn","Dayal"],
-Kolkata: ["Shreyas","Salt","Venky","Rana","Rinku","Russell","Narine","Starc","Varun","Harshit","Suyash"],
-Delhi: ["Warner","Shaw","Marsh","Pant","Stubbs","Axar","Lalit","Kuldeep","Nortje","Khaleel","Ishant"],
-Hyderabad: ["Head","Abhishek","Markram","Klaasen","Tripathi","Nitish","Shahbaz","Cummins","Bhuvi","Natarajan","Markande"],
-Rajasthan: ["Jaiswal","Buttler","Samson","Parag","Hetmyer","Jurel","Ashwin","Boult","Chahal","Avesh","Sandeep"],
-Punjab: ["Dhawan","Bairstow","Livingstone","Curran","Jitesh","Shashank","Brar","Rabada","Arshdeep","Chahar","Harshal"],
-Lucknow: ["Rahul","deKock","Stoinis","Pooran","Badoni","Hooda","Krunal","Bishnoi","Wood","Naveen","Mohsin"],
-Gujarat: ["Gill","Saha","Sudharsan","Miller","Tewatia","Shankar","Rashid","Shami","Noor","Umesh","Spencer"]
-
-};
-
-// ================= SCHEDULE =================
-let teamNames = Object.keys(teams);
-let schedule = [];
-
-for (let i = 0; i < teamNames.length; i++) {
-  for (let j = i + 1; j < teamNames.length; j++) {
-    schedule.push({
-      home: teamNames[i],
-      away: teamNames[j],
-      played: false,
-      result: ""
-    });
-  }
-}
-
-// ================= POINTS =================
-let points = {};
-teamNames.forEach(t => {
-  points[t] = { pts: 0, played: 0, won: 0, lost: 0 };
+// ---------------- POINTS TABLE ----------------
+let table = {};
+teams.forEach(t => {
+  table[t] = {played:0, win:0, loss:0, points:0};
 });
 
-// ================= MATCH STATE =================
+// ---------------- MATCH SYSTEM ----------------
+let matches = [];
 let matchIndex = 0;
+let currentMatch = null;
 
-let currentTeam = "";
-let opponent = "";
+// ---------------- MATCH STATE ----------------
+let runs = 0, wickets = 0, balls = 0;
+let interval = null;
+let running = false;
 
-let score = 0;
-let wickets = 0;
-let balls = 0;
-let innings = 1;
-let target = 0;
+// ---------------- GENERATE 70 MATCHES ----------------
+function generateMatches() {
+  matches = [];
 
-let striker = 0;
-let nonStriker = 1;
+  for (let i = 0; i < teams.length; i++) {
+    for (let j = i + 1; j < teams.length; j++) {
+      matches.push([teams[i], teams[j]]);
+      matches.push([teams[j], teams[i]]);
+    }
+  }
 
-// ================= START MATCH =================
-function startMatch() {
+  // shuffle
+  matches.sort(() => Math.random() - 0.5);
 
-  let m = schedule[matchIndex];
-
-  currentTeam = m.home;
-  opponent = m.away;
-
-  resetInnings();
-  innings = 1;
-
-  document.getElementById("matchTitle").innerText = currentTeam + " vs " + opponent;
-  document.getElementById("commentary").innerHTML = "";
-
-  updateUI();
-  showPage('match');
+  // take only 70 matches
+  matches = matches.slice(0, 70);
 }
 
-// ================= RESET =================
-function resetInnings() {
-  score = 0;
-  wickets = 0;
-  balls = 0;
-  striker = 0;
-  nonStriker = 1;
+// ---------------- START LEAGUE ----------------
+function startLeague() {
+  generateMatches();
+  matchIndex = 0;
+  nextMatch();
 }
 
-// ================= PLAY BALL =================
-function playBall() {
-
-  if (balls >= 120 || wickets >= 10) {
-    endInnings();
+// ---------------- NEXT MATCH ----------------
+function nextMatch() {
+  if (matchIndex >= matches.length) {
+    addCommentary("League Finished");
     return;
   }
 
-  let outcomes = [0,1,2,3,4,6,"W"];
-  let res = outcomes[Math.floor(Math.random() * outcomes.length)];
+  currentMatch = matches[matchIndex];
 
-  let player = teams[currentTeam][striker];
+  document.getElementById("matchTitle").innerText =
+    currentMatch[0] + " vs " + currentMatch[1];
 
-  let over = Math.floor(balls / 6) + "." + (balls % 6 + 1);
+  resetMatch();
 
-  let text = "";
+  running = true;
 
-  if (res === "W") {
-    wickets++;
-    text = `${over} ${player} OUT!`;
-    striker++;
-  } else {
-    score += res;
+  interval = setInterval(playBall, 800);
+}
 
-    if (res === 0) text = `${over} ${player} dot ball`;
-    if (res === 4) text = `${over} ${player} FOUR! 🔥`;
-    if (res === 6) text = `${over} ${player} SIX! 🚀`;
-    if (res === 1 || res === 2 || res === 3) text = `${over} ${player} ${res} run(s)`;
+// ---------------- STOP ----------------
+function stopMatch() {
+  clearInterval(interval);
+  running = false;
+}
 
-    if (res % 2 === 1) {
-      [striker, nonStriker] = [nonStriker, striker];
-    }
+// ---------------- RESET MATCH ----------------
+function resetMatch() {
+  runs = 0;
+  wickets = 0;
+  balls = 0;
+
+  document.getElementById("score").innerText = "0/0 (0.0)";
+  document.getElementById("commentary").innerHTML = "";
+}
+
+// ---------------- PLAY BALL ----------------
+function playBall() {
+
+  if (!running) return;
+
+  if (balls >= 30 || wickets >= 10) { // short match demo
+    finishMatch();
+    return;
   }
 
   balls++;
 
-  if (balls % 6 === 0) {
-    [striker, nonStriker] = [nonStriker, striker];
-  }
+  let outcome = getOutcome();
 
-  addComment(text);
-
-  if (innings === 2 && score >= target) {
-    endMatch(currentTeam);
-    return;
-  }
-
-  updateUI();
-}
-
-// ================= END INNINGS =================
-function endInnings() {
-
-  if (innings === 1) {
-
-    target = score + 1;
-
-    [currentTeam, opponent] = [opponent, currentTeam];
-
-    resetInnings();
-    innings = 2;
-
-    addComment("Innings Break");
-
+  if (outcome === "W") {
+    wickets++;
   } else {
-
-    let winner = (score >= target) ? currentTeam : opponent;
-    endMatch(winner);
+    runs += outcome;
   }
 
-  updateUI();
+  updateScore();
+  addCommentary(generateCommentary(outcome));
 }
 
-// ================= END MATCH =================
-function endMatch(winner) {
-
-  let m = schedule[matchIndex];
-  let loser = (winner === m.home) ? m.away : m.home;
-
-  points[winner].pts += 2;
-  points[winner].won++;
-  points[winner].played++;
-
-  points[loser].lost++;
-  points[loser].played++;
-
-  m.played = true;
-  m.result = winner + " won";
-
-  addComment("🏆 " + winner + " wins!");
-
-  updatePointsTable();
-  loadSchedule();
-
-  setTimeout(() => {
-    matchIndex++;
-    if (matchIndex < schedule.length) {
-      startMatch();
-    } else {
-      alert("League Finished!");
-    }
-  }, 2000);
+// ---------------- OUTCOME ----------------
+function getOutcome() {
+  const outcomes = [0,1,1,2,3,4,6,"W"];
+  return outcomes[Math.floor(Math.random() * outcomes.length)];
 }
 
-// ================= COMMENTARY =================
-function addComment(text) {
-  let div = document.getElementById("commentary");
-  div.innerHTML = text + "<br>" + div.innerHTML;
-}
-
-// ================= AUTO =================
-function autoPlay() {
-  let i = setInterval(() => {
-    if (balls >= 120 || wickets >= 10) clearInterval(i);
-    else playBall();
-  }, 120);
-}
-
-function simInnings() {
-  while (balls < 120 && wickets < 10) {
-    playBall();
-  }
-}
-
-function simMatch() {
-  simInnings();
-  simInnings();
-}
-
-// ================= UI =================
-function updateUI() {
+// ---------------- SCORE UPDATE ----------------
+function updateScore() {
+  let overs = Math.floor(balls / 6) + "." + (balls % 6);
 
   document.getElementById("score").innerText =
-    `${score}/${wickets} (${(balls/6).toFixed(1)})`;
-
-  document.getElementById("players").innerText =
-    `Striker: ${teams[currentTeam][striker] || "-"} | Non-Striker: ${teams[currentTeam][nonStriker] || "-"}`;
-
-  document.getElementById("nextMatch").innerText =
-    schedule[matchIndex]?.home + " vs " + schedule[matchIndex]?.away;
+    runs + "/" + wickets + " (" + overs + ")";
 }
 
-// ================= SCHEDULE UI =================
-function loadSchedule() {
+// ---------------- COMMENTARY ----------------
+function addCommentary(text) {
+  const div = document.getElementById("commentary");
+  div.innerHTML = "<p>" + text + "</p>" + div.innerHTML;
+}
 
-  let html = "<tr><th>#</th><th>Match</th><th>Status</th></tr>";
+// ---------------- COMMENTARY ENGINE ----------------
+let commentaryPool = [
+  "good length outside off",
+  "short ball on middle",
+  "full on the pads",
+  "slower ball outside off",
+  "back of a length",
+  "angling into the batter",
+  "wide outside off",
+  "on a yorker length",
+  "bouncer directed at the head",
+  "pitched up inviting the drive"
+];
 
-  schedule.forEach((m, i) => {
+function generateCommentary(outcome) {
+
+  let line = commentaryPool[Math.floor(Math.random() * commentaryPool.length)];
+  let ballText = formatBall();
+
+  let result = "";
+
+  if (outcome === "W") {
+    result = "OUT caught at deep midwicket";
+  } 
+  else if (outcome === 0) {
+    result = "no run";
+  } 
+  else if (outcome === 4) {
+    result = "FOUR";
+  } 
+  else if (outcome === 6) {
+    result = "SIX";
+  } 
+  else {
+    result = outcome + " run";
+  }
+
+  return ballText + " " + line + ", " + result;
+}
+
+// ---------------- BALL FORMAT ----------------
+function formatBall() {
+  let over = Math.floor((balls - 1) / 6);
+  let ball = ((balls - 1) % 6) + 1;
+  return over + "." + ball;
+}
+
+// ---------------- FINISH MATCH ----------------
+function finishMatch() {
+
+  clearInterval(interval);
+  running = false;
+
+  let team1 = currentMatch[0];
+  let team2 = currentMatch[1];
+
+  let score1 = runs;
+  let score2 = Math.floor(Math.random() * 200);
+
+  let winner;
+
+  if (score1 > score2) {
+    winner = team1;
+  } else {
+    winner = team2;
+  }
+
+  updatePoints(team1, team2, winner);
+
+  addCommentary("Match Finished: " + winner + " won");
+
+  matchIndex++;
+
+  setTimeout(nextMatch, 2000);
+}
+
+// ---------------- UPDATE POINTS ----------------
+function updatePoints(t1, t2, winner) {
+
+  table[t1].played++;
+  table[t2].played++;
+
+  if (winner === t1) {
+    table[t1].win++;
+    table[t1].points += 2;
+    table[t2].loss++;
+  } else {
+    table[t2].win++;
+    table[t2].points += 2;
+    table[t1].loss++;
+  }
+
+  renderTable();
+}
+
+// ---------------- RENDER TABLE ----------------
+function renderTable() {
+
+  let html = `
+  <tr>
+    <th>Team</th><th>P</th><th>W</th><th>L</th><th>Pts</th>
+  </tr>`;
+
+  let sorted = Object.entries(table)
+    .sort((a, b) => b[1].points - a[1].points);
+
+  sorted.forEach(([team, data]) => {
     html += `
-      <tr>
-        <td>${i+1}</td>
-        <td>${m.home} vs ${m.away}</td>
-        <td>${m.played ? m.result : "Upcoming"}</td>
-      </tr>
-    `;
-  });
-
-  document.getElementById("scheduleTable").innerHTML = html;
-}
-
-// ================= POINTS TABLE =================
-function updatePointsTable() {
-
-  let html = "<tr><th>Team</th><th>P</th><th>W</th><th>L</th><th>Pts</th></tr>";
-
-  Object.keys(points).forEach(t => {
-    let p = points[t];
-    html += `<tr>
-      <td>${t}</td>
-      <td>${p.played}</td>
-      <td>${p.won}</td>
-      <td>${p.lost}</td>
-      <td>${p.pts}</td>
+    <tr>
+      <td>${team}</td>
+      <td>${data.played}</td>
+      <td>${data.win}</td>
+      <td>${data.loss}</td>
+      <td>${data.points}</td>
     </tr>`;
   });
 
   document.getElementById("pointsTable").innerHTML = html;
 }
-
-// ================= PAGE NAV =================
-function showPage(p) {
-  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
-  document.getElementById(p).classList.add('active');
-}
-
-// ================= INIT =================
-loadSchedule();
-updatePointsTable();
-updateUI();
